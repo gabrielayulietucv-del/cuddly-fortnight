@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe Interactivo: Ética Periodística en el NYT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Stone, Slate, Subtle Blue) -->
+    <!-- Application Structure Plan: A single-page, thematic SPA with a primary interactive timeline to explore individual cases. This non-linear structure fosters user-driven discovery over passive reading. It's supported by data synthesis sections (charts on violation frequency, public trust trends) to provide deeper, cross-case insights. This is more effective than a linear report for demonstrating patterns and impact, which is a key goal of the user's academic project. -->
+    <!-- Visualization & Content Choices: Report Info -> Goal -> Viz/Method -> Interaction -> Justification. Case Studies -> Organize -> Interactive Timeline (HTML/JS) -> Click to reveal details -> Promotes exploration. Violation Patterns -> Compare -> Bar Chart (Chart.js) -> Hover for data -> Synthesizes trends across cases. Public Trust -> Change -> Line Chart (Chart.js) -> Hover for data -> Provides real-world quantitative impact. All choices avoid static presentation in favor of dynamic, user-driven interaction to make the complex ethical topic more engaging and understandable. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        h1, h2, h3 {
+            font-family: 'Lora', serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 450px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .timeline-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 4px solid transparent;
+        }
+        .timeline-item.active {
+            border-bottom-color: #3b82f6;
+            color: #1d4ed8;
+            transform: translateY(-2px);
+        }
+        .content-card {
+            transition: opacity 0.5s ease-in-out;
+        }
+        .principle-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background-color: #e0e7ff;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center py-8 md:py-12 border-b border-slate-200">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900">El Prestigio a Prueba</h1>
+            <p class="text-xl md:text-2xl mt-2 text-slate-600">Dilemas Éticos en The New York Times</p>
+            <p class="max-w-3xl mx-auto mt-4 text-slate-500">
+                Esta aplicación interactiva analiza las tensiones entre el prestigio y la responsabilidad ética en uno de los periódicos más influyentes del mundo. A través de casos emblemáticos, exploramos cómo las faltas graves afectan al periodismo, a sus protagonistas y a la confianza del público.
+            </p>
+        </header>
+
+        <main class="mt-10">
+
+            <section id="casos">
+                <h2 class="text-3xl font-bold text-center mb-2">Cronología de Casos Emblemáticos</h2>
+                <p class="text-center text-slate-500 mb-8 max-w-2xl mx-auto">Selecciona un caso en la línea de tiempo para explorar en detalle los hechos, los principios éticos vulnerados y las consecuencias que generó.</p>
+                
+                <div id="timeline" class="flex justify-center items-center flex-wrap gap-4 md:gap-8 p-4 bg-white rounded-lg shadow-sm border border-slate-200">
+                </div>
+
+                <div id="case-details" class="mt-8 p-6 md:p-8 bg-white rounded-lg shadow-md border border-slate-200 content-card min-h-[400px]">
+                </div>
+            </section>
+
+            <section id="analisis" class="mt-12 md:mt-16 py-12 bg-white rounded-lg shadow-sm border border-slate-200">
+                 <h2 class="text-3xl font-bold text-center mb-2">Análisis Transversal</h2>
+                <p class="text-center text-slate-500 mb-8 max-w-2xl mx-auto">Más allá de los casos individuales, existen patrones en las faltas éticas. Esta sección visualiza los principios más vulnerados y el impacto agregado de estos escándalos en la credibilidad del periodismo.</p>
+                <div class="grid md:grid-cols-2 gap-8 md:gap-12 items-center px-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-center mb-4">Principios Éticos Vulnerados con Mayor Frecuencia</h3>
+                        <div class="chart-container">
+                            <canvas id="principlesChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-center mb-4">El Impacto en la Confianza Pública</h3>
+                        <div class="chart-container">
+                            <canvas id="trustChart"></canvas>
+                        </div>
+                         <p class="text-center text-xs text-slate-400 mt-2">Fuente: Datos históricos de encuestas de confianza en los medios (ej. Gallup). La línea muestra una tendencia general y no datos anuales exactos.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="conclusiones" class="mt-12 md:mt-16">
+                <h2 class="text-3xl font-bold text-center mb-4">Conclusiones y Reflexiones</h2>
+                <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-sm border border-slate-200 space-y-4 text-slate-600">
+                    <p>El análisis de los casos del New York Times revela una paradoja fundamental: el prestigio no inmuniza contra las faltas éticas, sino que magnifica sus consecuencias. Cada escándalo, desde el fraude de Jayson Blair hasta las controversias de "Caliphate", no solo daña la reputación del individuo o del medio, sino que erosiona el pilar sobre el que se sostiene todo el periodismo: la confianza del público.</p>
+                    <p>La recurrencia de violaciones a principios como la <strong class="font-semibold text-slate-700">veracidad</strong> y la <strong class="font-semibold text-slate-700">responsabilidad social</strong> demuestra que las presiones por la exclusividad, la velocidad y el impacto narrativo pueden nublar el juicio ético, incluso en las redacciones más respetadas. La respuesta del medio, a menudo reactiva, subraya la necesidad de mecanismos de control interno proactivos y una cultura de transparencia inquebrantable.</p>
+                    <p>En última instancia, el NYT actúa como un espejo para toda la profesión. Su lucha por mantener el equilibrio entre influencia y ética enseña una lección vital: la credibilidad es un activo frágil, construido durante décadas y que puede ser destruido en un instante. La defensa rigurosa de la ética no es un obstáculo para el periodismo de calidad, sino su condición indispensable.</p>
+                </div>
+            </section>
+
+        </main>
+        
+        <footer class="text-center py-8 mt-12 border-t border-slate-200">
+            <p class="text-slate-500">Informe elaborado para el curso de Periodismo Especializado.</p>
+            <p class="text-sm text-slate-400 mt-1">Ciencias de la Comunicación, 6to Ciclo.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const caseData = {
+            blair: {
+                year: 2003,
+                title: 'El Caso Jayson Blair: Fraude y Plagio',
+                description: 'Jayson Blair, un joven reportero en ascenso, fue descubierto por fabricar comentarios, inventar escenas y plagiar material de otros periódicos en docenas de artículos. El escándalo fue tan grande que provocó la renuncia de los dos principales editores del periódico, Howell Raines y Gerald Boyd.',
+                principles: ['Veracidad', 'Transparencia', 'Responsabilidad Social'],
+                consequences: {
+                    periodista: 'Despido inmediato y fin de su carrera periodística. Se convirtió en un símbolo de la mala praxis.',
+                    medio: 'Grave crisis de credibilidad. El NYT publicó una investigación interna sin precedentes de 7,000 palabras detallando el fraude. Se implementaron políticas más estrictas y se creó la figura del "Public Editor".',
+                    publico: 'Pérdida de confianza en el medio y escepticismo generalizado sobre las prácticas periodísticas en la industria.'
+                }
+            },
+            kouwe: {
+                year: 2010,
+                title: 'Zachery Kouwe: Plagio por Agregación',
+                description: 'El reportero de negocios Zachery Kouwe fue acusado de plagiar material de The Wall Street Journal y Reuters en varias de sus publicaciones para el blog DealBook del NYT. Su método consistía en copiar y pegar fragmentos de otros medios con ligeras modificaciones.',
+                principles: ['Veracidad', 'Independencia'],
+                consequences: {
+                    periodista: 'Renunció tras ser confrontado con las pruebas. Su caso destacó los peligros del periodismo digital de alta velocidad.',
+                    medio: 'El NYT tuvo que emitir correcciones y disculpas, reforzando sus guías sobre la atribución y el uso de material de otras fuentes en el entorno digital.',
+                    publico: 'Generó un debate sobre la ética de la "agregación de noticias" y los estándares en los blogs periodísticos.'
+                }
+            },
+            caliphate: {
+                year: 2018,
+                title: 'Podcast "Caliphate": Fuentes no Verificadas',
+                description: 'El aclamado podcast "Caliphate" basó gran parte de su narrativa en el testimonio de un joven canadiense que afirmaba haber sido un verdugo de ISIS. Una investigación posterior del propio NYT reveló que el individuo probablemente había inventado toda su historia. El caso expuso fallas graves en el proceso de verificación de fuentes.',
+                principles: ['Veracidad', 'Responsabilidad Social', 'Transparencia'],
+                consequences: {
+                    periodista: 'La principal reportera, Rukmini Callimachi, fue reasignada a otra área. El NYT recibió fuertes críticas por su falta de rigor.',
+                    medio: 'El periódico tuvo que emitir una extensa retractación y devolver un prestigioso premio Peabody. El editor ejecutivo, Dean Baquet, admitió "un fallo institucional".',
+                    publico: 'Dañó la confianza en el periodismo narrativo de largo formato y cuestionó la credibilidad de proyectos de alto perfil.'
+                }
+            },
+            mills: {
+                year: 2021,
+                title: 'Andy Mills y el Legado de "Caliphate"',
+                description: 'Andy Mills, productor principal de "Caliphate", renunció después de que resurgieran acusaciones pasadas de comportamiento inapropiado con colegas. Aunque su renuncia no fue directamente por el fallo periodístico, estuvo intrínsecamente ligada al escrutinio que el medio enfrentó por el podcast.',
+                principles: ['Responsabilidad Social', 'Respeto a las Personas'],
+                consequences: {
+                    periodista: 'Renunció al NYT en medio de la controversia.',
+                    medio: 'El caso se sumó a la crisis de "Caliphate", mostrando cómo los problemas éticos personales y profesionales pueden entrelazarse y afectar la reputación institucional.',
+                    publico: 'Alimentó el debate sobre la cultura en las redacciones y la responsabilidad de los medios de comunicación.'
+                }
+            },
+            iseman: {
+                year: 2008,
+                title: 'Vicki Iseman: Insinuaciones sin Pruebas',
+                description: 'El NYT publicó un artículo que insinuaba una relación inapropiada entre el candidato presidencial John McCain y la lobista Vicki Iseman, sin presentar pruebas concluyentes. El reportaje se basó en fuentes anónimas y fue criticado por ser un ataque personal disfrazado de periodismo de investigación.',
+                principles: ['Veracidad', 'Respeto a las Personas', 'Independencia'],
+                consequences: {
+                    periodista: 'Los reporteros y editores defendieron la historia, pero enfrentaron críticas generalizadas por su falta de solidez.',
+                    medio: 'Vicki Iseman demandó al periódico por 17 millones de dólares por difamación. El caso se resolvió fuera de los tribunales con una nota aclaratoria del NYT, aunque no una retractación completa.',
+                    publico: 'Fomentó la percepción de que los medios de élite pueden usar su poder para influir en la política a través de insinuaciones y ataques personales.'
+                }
+            }
+        };
+
+        const timeline = document.getElementById('timeline');
+        const caseDetailsContainer = document.getElementById('case-details');
+        let currentActiveItem = null;
+
+        function displayCase(caseId) {
+            const data = caseData[caseId];
+            if (!data) return;
+
+            caseDetailsContainer.style.opacity = 0;
+
+            setTimeout(() => {
+                caseDetailsContainer.innerHTML = `
+                    <h3 class="text-2xl font-bold mb-3 text-slate-800">${data.title} (${data.year})</h3>
+                    <p class="mb-6 text-slate-600">${data.description}</p>
+                    <div class="mb-6">
+                        <h4 class="font-semibold mb-3 text-slate-700">Principios Éticos Vulnerados:</h4>
+                        <div class="flex flex-wrap gap-3">
+                            ${data.principles.map(p => `<span class="principle-tag">${p}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-6 text-sm">
+                        <div>
+                            <h5 class="font-bold text-blue-700 mb-1">Para el Periodista</h5>
+                            <p class="text-slate-500">${data.consequences.periodista}</p>
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-green-700 mb-1">Para el Medio</h5>
+                            <p class="text-slate-500">${data.consequences.medio}</p>
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-purple-700 mb-1">Para el Público</h5>
+                            <p class="text-slate-500">${data.consequences.publico}</p>
+                        </div>
+                    </div>
+                `;
+                caseDetailsContainer.style.opacity = 1;
+            }, 300);
+        }
+
+        function createTimeline() {
+            const sortedCases = Object.entries(caseData).sort((a, b) => a[1].year - b[1].year);
+
+            sortedCases.forEach(([key, value]) => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item p-2 md:p-3 text-center';
+                item.textContent = `${value.title.split(':')[0]} (${value.year})`;
+                item.dataset.case = key;
+
+                item.addEventListener('click', () => {
+                    if (currentActiveItem) {
+                        currentActiveItem.classList.remove('active');
+                    }
+                    item.classList.add('active');
+                    currentActiveItem = item;
+                    displayCase(key);
+                });
+                timeline.appendChild(item);
+            });
+        }
+        
+        function initCharts() {
+            const principlesCtx = document.getElementById('principlesChart').getContext('2d');
+            const trustCtx = document.getElementById('trustChart').getContext('2d');
+            
+            const principleCounts = {};
+            Object.values(caseData).forEach(c => {
+                c.principles.forEach(p => {
+                    principleCounts[p] = (principleCounts[p] || 0) + 1;
+                });
+            });
+
+            new Chart(principlesCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(principleCounts),
+                    datasets: [{
+                        label: 'Nº de Casos',
+                        data: Object.values(principleCounts),
+                        backgroundColor: '#60a5fa',
+                        borderColor: '#2563eb',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) { if (value % 1 === 0) { return value; } }
+                            }
+                        }
+                    }
+                }
+            });
+
+            new Chart(trustCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1997', '2003', '2008', '2013', '2018', '2023'],
+                    datasets: [{
+                        label: 'Confianza en los Medios (%)',
+                        data: [53, 50, 44, 40, 45, 32],
+                        fill: true,
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderColor: '#3b82f6',
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                         tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            callbacks: {
+                                label: function(context) {
+                                    return `Confianza: ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 30,
+                            max: 60,
+                             ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        window.onload = function() {
+            createTimeline();
+            initCharts();
+            
+            const firstCaseKey = Object.keys(caseData).sort((a,b) => caseData[a].year - caseData[b].year)[0];
+            const firstTimelineItem = document.querySelector(`.timeline-item[data-case="${firstCaseKey}"]`);
+            if (firstTimelineItem) {
+                firstTimelineItem.click();
+            }
+        };
+    </script>
+</body>
+</html>
